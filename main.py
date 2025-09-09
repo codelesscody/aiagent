@@ -19,7 +19,7 @@ When a user asks a question or makes a request, make a function call plan. You c
 - Execute Python files with optional arguments
 - Write or overwrite files
 
-All paths you provide should be relative to the working directory. You do not need to specify the working directory in your function calls as it is automatically injected for security reasons.
+All paths you provide should be relative to the working directory. To list files in the current working directory, simply use "." as the directory parameter. If a location is not specified, assume the code in question will be in the current working directory. Look through all relevant files in the working directory to find it. You do not need to specify the working directory in your function calls as it is automatically injected for security reasons.
 """
 
 def main():
@@ -42,28 +42,43 @@ def main():
         types.Content(role="user", parts=[types.Part(text=user_prompt)]),
     ]
 
-    generate_content(client, messages, verbose)
-
+    for i in range(MAX_ITERATIONS):
+        # loop up to MAX_ITERATIONS times calling generate_content. It will return None until it finally has no function calls and returns response.text
+        try:
+            final_response = generate_content(client, messages, verbose)
+            if final_response:
+                print(f"Final response:\n{final_response}")
+                break
+        except Exception as e:
+            print(f"Error during content generation: {e}")
 
 
 def generate_content(client, messages, verbose: bool = False):
-
     response = client.models.generate_content(
         model=MODEL_NAME,
         contents=messages,
         config=types.GenerateContentConfig(tools=[available_functions], system_instruction=system_prompt)
         )
 
-    if response.function_calls is not None:
-        for function_call_part in response.function_calls:
-            function_call_result = call_function(function_call_part, verbose)
-        if hasattr(function_call_result.parts[0].function_response, 'response') and verbose:
-            print(f"-> {function_call_result.parts[0].function_response.response}")
-    else:
-        print(f"Response: {response.text}")
-    if verbose:
+    if verbose and usage.metadata:
         print(f"Prompt tokens: {response.usage_metadata.prompt_token_count}")
         print(f"Response tokens: {response.usage_metadata.candidates_token_count}")
+
+    # After calling client's generate_content method, check the .candidates property of the response.
+    # It's a list of response variations (usually just one). It contains the equivalent of "I want to call get_files_info...", 
+    # so we need to add it to our conversation. Iterate over each candidate and add its .content to your messages list.
+    if response.candidates:
+        for candidate in response.candidates:
+            messages.append(candidate.content)
+
+    if not response.function_calls:
+        return f"Response: {response.text}"
+
+    for function_call_part in response.function_calls:
+        function_call_result = call_function(function_call_part, verbose)
+        if verbose:
+            print(f"-> {function_call_result.parts[0].function_response.response}")
+    messages.append(types.Content(role="user", parts=function_call_result.parts))
 
 if __name__ == "__main__":
     main()

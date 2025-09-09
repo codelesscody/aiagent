@@ -24,9 +24,9 @@ working_directory = "./calculator"
 
 def call_function(function_call_part, verbose=False):
     if verbose:
-        print(f"Calling function: {function_call_part.name}({function_call_part.args})")
+        print(f" - Calling function: {function_call_part.name}({function_call_part.args})")
     else:
-        print(f"Calling function: {function_call_part.name}")
+        print(f" - Calling function: {function_call_part.name}")
     function_name = function_call_part.name
     arguments = function_call_part.args
     try:
