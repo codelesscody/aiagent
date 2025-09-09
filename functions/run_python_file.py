@@ -3,10 +3,10 @@ import subprocess
 from google.genai import types
 
 def run_python_file(working_directory, file_path, args=[]):
-
-    full_path = os.path.join(working_directory, file_path)
-    if working_directory not in os.path.normpath(full_path):
-        return f'Error: Cannot execute "{file_path}" as it is outside the permitted working directory'
+    working_path = os.path.abspath(working_directory)
+    full_path = os.path.abspath(os.path.join(working_directory, file_path))
+    if working_path not in full_path:
+        return f'Error: Cannot execute "{file_path}" as it is outside the permitted working directory (working_directory="{working_directory}")'
     if not os.path.isfile(full_path):
         return f'Error: File "{file_path}" not found.'
     if not file_path.endswith('.py'):

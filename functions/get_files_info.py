@@ -4,10 +4,11 @@ from google.genai import types
 def get_files_info(working_directory, directory="."):
 
     files_info = []
-    full_path = os.path.join(working_directory, directory)
+    working_path = os.path.abspath(working_directory)
+    full_path = os.path.abspath(os.path.join(working_directory, directory))
 
     try:
-        if working_directory not in os.path.normpath(full_path):
+        if working_path not in full_path:
             raise ValueError(f'Error: Cannot list "{directory}" as it is outside the permitted working directory')
         if not os.path.isdir(full_path):
             raise ValueError(f'Error: "{directory}" is not a directory')

@@ -3,8 +3,9 @@ from config import *
 from google.genai import types
 
 def get_file_content(working_directory, file_path):
-    full_path = os.path.join(working_directory, file_path)
-    if working_directory not in os.path.normpath(full_path):
+    working_path = os.path.abspath(working_directory)
+    full_path = os.path.abspath(os.path.join(working_directory, file_path))
+    if working_path not in full_path:
         return f'Error: Cannot read "{file_path}" as it is outside the permitted working directory'
     if not os.path.isfile(full_path):
         return f'Error: File not found or is not a regular file: "{file_path}"'
