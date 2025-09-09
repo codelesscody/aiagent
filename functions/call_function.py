@@ -1,15 +1,24 @@
 from google.genai import types
-from functions.get_file_content import get_file_content
-from functions.get_files_info import get_files_info
-from functions.write_file import write_file
-from functions.run_python_file import run_python_file
+from functions.get_file_content import get_file_content, schema_get_file_content
+from functions.get_files_info import get_files_info, schema_get_files_info
+from functions.write_file import write_file, schema_write_file
+from functions.run_python_file import run_python_file, schema_run_python_file
 
-available_functions = {
+callable_functions = {
     "get_file_content": get_file_content,
     "get_files_info": get_files_info,
     "write_file": write_file,
     "run_python_file": run_python_file,
 }
+
+available_functions = types.Tool(
+    function_declarations=[
+        schema_get_files_info,
+        schema_get_file_content,
+        schema_write_file,
+        schema_run_python_file,
+    ]
+)
 
 working_directory = "./calculator"
 
@@ -21,7 +30,7 @@ def call_function(function_call_part, verbose=False):
     function_name = function_call_part.name
     arguments = function_call_part.args
     try:
-        function_result = available_functions[function_call_part.name](working_directory, **arguments)
+        function_result = callable_functions[function_call_part.name](working_directory, **arguments)
     except Exception as e:
         print(f"Error calling function {function_name}: {e}")
         return types.Content(
